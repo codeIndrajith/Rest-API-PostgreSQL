@@ -3,23 +3,37 @@ const queries = require('./queries');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const getStudents = (req, res) => {
-  pool.query(queries.getStudents, (error, results) => {
-    if (error) {
-      throw error;
+const getStudents = async (req, res) => {
+  try {
+    const students = await prisma.students.findMany();
+    if (students) {
+      res.status(200).json(students);
     }
-    res.status(200).json(results.rows);
-  });
+  } catch (error) {
+    res.status(404).json({ message: "Table haven't data", error });
+  } finally {
+    await prisma.$disconnect();
+  }
 };
 
-const getStudentById = (req, res) => {
+const getStudentById = async (req, res) => {
   const id = parseInt(req.params.id);
-  pool.query(queries.getStudentById, [id], (error, results) => {
-    if (error) {
-      throw error;
+  try {
+    const student = await prisma.students.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (student) {
+      res.status(200).json(student);
+    } else {
+      res.status(404).json({ message: 'student not found' });
     }
-    res.status(200).json(results.rows);
-  });
+  } catch (error) {
+    res.status(400).json({ message: 'Something error' });
+  } finally {
+    await prisma.$disconnect();
+  }
 };
 
 const addStudent = async (req, res) => {
